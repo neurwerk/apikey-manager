@@ -1,13 +1,18 @@
 {
   "configurations": [
     {
-      "name": "Python Debugger: API Key Manager",
+      "name": "Python Debugger: Module",
       "type": "debugpy",
       "request": "launch",
-      "module": "app.main",
-      "env": { "PYTHONPATH": "${workspaceFolder}/" },
-      "justMyCode": false,
-      "console": "integratedTerminal"
-    }
+      "python": "/home/jgaucher/projects/rspy/github.hide/apikey-manager/venv/bin/python",
+      "module": "uvicorn",
+      "args": ["app.main:app", "--host", "localhost", "--port", "9998", "--reload", "--log-config=log_config.yaml"],
+      "env": {
+        "APIKM_OIDC_ENDPOINT": "https://iam.dev-rspy.esa-copernicus.eu",
+        "APIKM_OIDC_REALM": "rspy",
+        "APIKM_OIDC_CLIENT_ID": "fastapi_test",
+        "APIKM_OIDC_CLIENT_SECRET": "wXOuCrk5dpwStZQ9GTqUzevXr4dVq171",
+      }
+    },
   ]
 }
