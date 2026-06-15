@@ -232,6 +232,7 @@ class APIKeyCrud:
                         "iam_roles",
                         "config",
                         "latest_sync_date",
+                        "name",
                     ]
                 ).where(
                     (t.c.api_key == self.__hash(api_key))

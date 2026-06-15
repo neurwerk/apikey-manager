@@ -69,9 +69,9 @@ image:
   # -- Image pull policy
   pullPolicy: IfNotPresent
   # -- Image repository
-  repository: ghcr.io/csgroup-oss/apikey-manager
+  repository: ghcr.io/neurwerk/apikey-manager
   # -- Image tag
-  tag: 0.1.dev0.g3df33f1ac
+  tag: 0.1.4
 
 imagePullSecrets:
   # -- Image pull secrets

@@ -22,7 +22,7 @@ from typing import Annotated
 
 import aiohttp
 import jwt
-from fastapi import APIRouter, Depends, HTTPException, Query, Request, Security
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, Security
 from fastapi.security import APIKeyHeader, APIKeyQuery, OpenIdConnect
 from jwt.exceptions import PyJWTError
 from pydantic import BaseModel, Json
@@ -118,16 +118,25 @@ api_key_header = APIKeyHeader(
 
 
 async def api_key_security(
+    request: Request,
     query_param: Annotated[str, Security(api_key_query)],
     header_param: Annotated[str, Security(api_key_header)],
 ):
-    if not query_param and not header_param:
+    api_key = query_param or header_param
+
+    # Fallback to Authorization: Bearer (OpenAI-compatible header)
+    if not api_key:
+        auth_header = request.headers.get("authorization", "")
+        if auth_header.startswith("Bearer "):
+            api_key = auth_header[7:]
+
+    if not api_key:
         raise HTTPException(
             status_code=HTTP_403_FORBIDDEN,
             detail="An API key must be passed as query or header",
         )
 
-    key_info = apikey_crud.check_key(query_param or header_param)
+    key_info = apikey_crud.check_key(api_key)
 
     if key_info:
         return key_info
@@ -278,8 +287,9 @@ def get_api_key_usage_logs(
 class CheckKey(BaseModel):
     user_id: str
     user_login: str
-    iam_roles: list | None
-    config: dict | None
+    name: str | None = None
+    iam_roles: list | None = None
+    config: dict | None = None
 
 
 def custom_rate_limiter(func):
@@ -292,9 +302,11 @@ def custom_rate_limiter(func):
     return rate_limiter.limit(api_settings.rate_limit)(func)
 
 
-@router.get(
+@router.api_route(
     "/check_key",
+    methods=["GET", "POST"],
     response_model=CheckKey,
+    response_model_exclude_unset=True,
     include_in_schema=api_settings.show_technical_endpoints,
 )
 @custom_rate_limiter
@@ -309,4 +321,12 @@ async def check_api_key(
     Todo:
         * Synchronize database with keycloak.
     """
-    return await api_key_security(query_param, header_param)
+    key_info = await api_key_security(request, query_param, header_param)
+    return Response(
+        content=CheckKey(**key_info).model_dump_json(exclude_unset=True),
+        media_type="application/json",
+        headers={
+            "x-auth-user": key_info["user_id"],
+            "x-auth-app": key_info.get("name", ""),
+        },
+    )

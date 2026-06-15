@@ -1,0 +1,16 @@
+.env
+.git
+.gitignore
+*.md
+LICENSE.txt
+NOTICE.md
+venv
+*.pyc
+*cache*
+dist
+*.egg-info
+build
+tests/
+docs/
+deploy/
+.github/

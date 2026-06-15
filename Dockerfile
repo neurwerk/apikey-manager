@@ -15,7 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM amd64/python:3.12-alpine as build
+FROM python:3.12-alpine as build
 
 # Add non root user
 RUN addgroup -S app && adduser app -S -G app && chown app /home/app
