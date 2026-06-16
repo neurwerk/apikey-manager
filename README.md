@@ -115,10 +115,12 @@ You can check the API docs at [localhost:9999](http://localhost:9999/docs/).
 
 ### Run with docker container
 
-Build image
+Build image (version is required by `setuptools_scm`)
 
 ```bash
-docker build -t apikeymanager:latest .
+docker build \
+  --build-arg SETUPTOOLS_SCM_PRETEND_VERSION="$(cat .version | tr -d ' \n')" \
+  -t apikeymanager:latest .
 ```
 
 Use it
@@ -135,12 +137,28 @@ docker run --name apikeymanager --rm \
 
 You can check the API docs at [localhost:8000](http://localhost:8000/docs).
 
-### Publish the Docker image to the Image repository
+### Building and pushing
+
+#### GitHub Actions (recommended)
+
+Push to `main` → GitHub Actions builds for `linux/amd64` + `linux/arm64` and pushes to
+`ghcr.io/neurwerk/apikey-manager:latest`.  Push a `v*` tag → semver tags.
+
+#### Local build
 
 ```bash
-docker image tag apikeymanager:latest 643vlk6z.gra7.container-registry.ovh.net/metis/apikeymanager:latest
+docker build \
+  --build-arg SETUPTOOLS_SCM_PRETEND_VERSION="$(cat .version | tr -d ' \n')" \
+  -t ghcr.io/neurwerk/apikey-manager:latest .
+docker push ghcr.io/neurwerk/apikey-manager:latest
+```
 
-docker push 643vlk6z.gra7.container-registry.ovh.net/metis/apikeymanager:latest
+For multi-arch builds (linux/amd64 + linux/arm64):
+
+```bash
+docker buildx build --platform linux/amd64,linux/arm64 \
+  --build-arg SETUPTOOLS_SCM_PRETEND_VERSION="$(cat .version | tr -d ' \n')" \
+  -t ghcr.io/neurwerk/apikey-manager:latest --push .
 ```
 
 ### HELM
