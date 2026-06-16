@@ -144,17 +144,6 @@ You can check the API docs at [localhost:8000](http://localhost:8000/docs).
 Push to `main` → GitHub Actions builds for `linux/amd64` + `linux/arm64` and pushes to
 `ghcr.io/neurwerk/apikey-manager:latest`.  Push a `v*` tag → semver tags.
 
-> **First push only** — `GITHUB_TOKEN` cannot create a brand new package.
-> Create the package manually once with a PAT:
-> ```bash
-> source ../.env && echo "$GITHUB_PAT" | docker login ghcr.io -u x-access-token --password-stdin
-> docker build \
->   --build-arg SETUPTOOLS_SCM_PRETEND_VERSION="$(cat .version | tr -d ' \n')" \
->   -t ghcr.io/neurwerk/apikey-manager:latest .
-> docker push ghcr.io/neurwerk/apikey-manager:latest
-> ```
-> After this, GitHub Actions on push to `main` will work automatically.
-
 #### Local build
 
 ```bash
