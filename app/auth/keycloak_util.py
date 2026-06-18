@@ -47,21 +47,24 @@ class KCUtil:
     revoked. Without this sync, a deleted user's API keys would remain valid
     indefinitely.
 
-    Connection lifecycle — a fresh KeycloakAdmin connection is created on every
-    call to get_user_info(). This avoids stale TCP connections that can occur
-    when a single long-lived connection sits idle between requests (the typical
-    5-minute sync interval is long enough for intermediate proxies and load
-    balancers to drop the connection). The overhead of re-authentication is
-    negligible since this method runs at most once every 5 minutes per
-    active API key.
+    Connection endpoint — uses oidc_admin_endpoint (internal K8s DNS) for
+    server-to-server Admin API calls, keeping traffic off the external network.
+    The external oidc_endpoint is used only for JWT validation (issuer matching)
+    and browser-facing OIDC flows.
     """
 
     def __get_keycloak_admin(self) -> KeycloakAdmin:
-        """Init and return an admin keycloak connection from the admin client"""
-        LOGGER.debug(f"Connecting to the keycloak server {settings.oidc_endpoint} ...")
+        """Init and return an admin keycloak connection from the admin client
+
+        Uses settings.oidc_admin_endpoint (internal K8s DNS) rather than
+        settings.oidc_endpoint (external), so Admin API calls stay on the
+        cluster network.
+        """
+        endpoint = settings.oidc_admin_endpoint or settings.oidc_endpoint
+        LOGGER.debug(f"Connecting to the keycloak admin server {endpoint} ...")
         try:
             keycloak_connection = KeycloakOpenIDConnection(
-                server_url=settings.oidc_endpoint,
+                server_url=endpoint,
                 realm_name=settings.oidc_realm,
                 client_id=settings.oidc_client_id,
                 client_secret_key=settings.oidc_client_secret,
@@ -72,7 +75,7 @@ class KCUtil:
 
         except KeycloakError as error:
             raise RuntimeError(
-                f"Error connecting with keycloak to '{settings.oidc_endpoint}', "
+                f"Error connecting with keycloak to '{endpoint}', "
                 f"realm_name={settings.oidc_realm} with client_id="
                 f"{settings.oidc_client_id}."
             ) from error

@@ -65,7 +65,15 @@ class ApiSettings(BaseSettings):
     # Admin client id and secret used for oauth2 operations.
     # The client must have have the real_management/view_users
     # and "implicit" flow privileges.
+    #
+    # oidc_endpoint: external URL for JWT validation (issuer must match
+    #   what's in Keycloak JWTs). Used by Swagger UI "Authorize" and
+    #   user login flows — must be reachable from the browser.
     oidc_endpoint: str = ""
+    # oidc_admin_endpoint: internal cluster URL for server-to-server
+    #   Keycloak Admin API calls. Keeps traffic off the external
+    #   network, avoiding stale TCP connection issues through Traefik.
+    oidc_admin_endpoint: str = ""
     oidc_realm: str = ""
     oidc_client_id: str = ""
     oidc_client_secret: str = ""
