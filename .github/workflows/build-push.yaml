@@ -55,13 +55,14 @@ jobs:
         shell: bash
         run: |
           # On tag push: strip v prefix from ref.
-          # On main push: read .version file and append -dev-<short_sha>.
+          # On main push: read .version file and append dev+<short_sha>
+          # (PEP 440 local version format, required by newer packaging libs).
           if [[ "${{ github.ref }}" =~ ^refs/tags/v ]]; then
             VERSION="${GITHUB_REF_NAME#v}"
           else
             BASE=$(cat .version | tr -d ' \n')
             SHORT_SHA="${GITHUB_SHA:0:7}"
-            VERSION="${BASE}-dev-${SHORT_SHA}"
+            VERSION="${BASE}.dev0+${SHORT_SHA}"
           fi
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
