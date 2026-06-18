@@ -36,8 +36,25 @@ class KCInfo:
 
 
 class KCUtil:
-    def __init__(self) -> None:
-        self.keycloak_admin = self.__get_keycloak_admin()
+    """
+    Keycloak Admin API utility.
+
+    Security note — get_user_info() is called by check_key() at a configurable
+    interval (keycloak_sync_freq, default: 5 min) to re-verify that the user
+    still exists and is active in Keycloak. This ensures that when an admin
+    deletes or disables a user in Keycloak, their API keys stop working within
+    the sync interval — even if the keys themselves haven't expired or been
+    revoked. Without this sync, a deleted user's API keys would remain valid
+    indefinitely.
+
+    Connection lifecycle — a fresh KeycloakAdmin connection is created on every
+    call to get_user_info(). This avoids stale TCP connections that can occur
+    when a single long-lived connection sits idle between requests (the typical
+    5-minute sync interval is long enough for intermediate proxies and load
+    balancers to drop the connection). The overhead of re-authentication is
+    negligible since this method runs at most once every 5 minutes per
+    active API key.
+    """
 
     def __get_keycloak_admin(self) -> KeycloakAdmin:
         """Init and return an admin keycloak connection from the admin client"""
@@ -61,9 +78,13 @@ class KCUtil:
             ) from error
 
     def get_user_info(self, user_id: str) -> KCInfo:
-        """Get user info from keycloak"""
+        """Get user info from keycloak
+
+        Creates a fresh Keycloak admin connection for each call to avoid
+        stale TCP connection issues after idle periods (see class docstring).
+        """
         try:
-            kadm = self.keycloak_admin
+            kadm = self.__get_keycloak_admin()
             user = kadm.get_user(user_id)
             iam_roles = [
                 role["name"] for role in kadm.get_composite_realm_roles_of_user(user_id)

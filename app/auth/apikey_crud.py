@@ -256,7 +256,16 @@ class APIKeyCrud:
             if latest_sync_date.utcoffset() is None:
                 latest_sync_date = latest_sync_date.replace(tzinfo=timezone.utc)
 
-            # If the apikey info has not been updated from keycloak for a long time
+            # ── Periodic Keycloak sync ────────────────────────────────────────
+            # Security: re-verify the user still exists and is active in Keycloak.
+            # This ensures that if an admin deletes or disables a user in Keycloak,
+            # their API keys stop working within the sync interval — even if the
+            # keys themselves haven't expired or been revoked.
+            #
+            # Without this sync, a deleted/disbled user's cached data would remain
+            # in SQLite indefinitely, making API keys effective forever.
+            # The sync interval is configured via APIKM_KEYCLOAK_SYNC_FREQ env var
+            # (default: 300s = 5 minutes). Set to -1 to disable.
             if settings.keycloak_sync_freq > 0 and datetime.now(UTC) > (
                 latest_sync_date + timedelta(seconds=settings.keycloak_sync_freq)
             ):
