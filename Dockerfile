@@ -36,7 +36,8 @@ COPY --chown=app:app app/__init__.py  app/
 
 # Install dependencies and create the app/_version.py file with setuptools_scm
 USER root
-RUN pip install --root-user-action=ignore --no-cache-dir .[postgres]
+RUN apk add --no-cache gcc musl-dev git && \
+    pip install --root-user-action=ignore --no-cache-dir .[postgres]
 RUN chown app:app app/_version.py
 
 FROM build as test
