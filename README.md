@@ -137,14 +137,20 @@ docker run --name apikeymanager --rm \
 
 You can check the API docs at [localhost:8000](http://localhost:8000/docs).
 
-### Building and pushing
+### Releasing
 
-#### GitHub Actions (recommended)
+1. Bump `.version` file
+2. Commit: `git add -A && git commit -m "chore: bump to v0.2.0"`
+3. Tag: `git tag v0.2.0 && git push origin main --tags`
+4. ✅ GitHub Actions builds `ghcr.io/neurwerk/apikey-manager:0.2.0`
+5. Pin the new version in `base/charts/infra/apikey-manager/templates/deployment.yaml`
+
+### GitHub Actions (recommended)
 
 Push to `main` → GitHub Actions builds for `linux/amd64` + `linux/arm64` and pushes to
 `ghcr.io/neurwerk/apikey-manager:latest`.  Push a `v*` tag → semver tags.
 
-#### Local build
+### Local build
 
 ```bash
 docker build \
